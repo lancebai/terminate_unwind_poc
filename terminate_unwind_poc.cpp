@@ -64,32 +64,32 @@ static void thread_func(int thread_idx)
 
 // Call this function to get a backtrace.
 void backtrace() {
-  unw_cursor_t cursor;
-  unw_context_t context;
+    unw_cursor_t cursor;
+    unw_context_t context;
 
-  // Initialize cursor to current frame for local unwinding.
+    // Initialize cursor to current frame for local unwinding.
 
-  if (unw_getcontext(&context) != 0) {
-    fprintf(stderr, "failed to get context\n");
-  }
+    if (unw_getcontext(&context) != 0) {
+        fprintf(stderr, "failed to get context\n");
+    }
 
-  if(unw_init_local(&cursor, &context) != 0) {
-    fprintf(stderr, "failed to init local\n");
-  }
+    if(unw_init_local(&cursor, &context) != 0) {
+        fprintf(stderr, "failed to init local\n");
+    }
 
 
-  int backtrace_level = 0;
+    int backtrace_level = 0;
 
   // Unwind frames one by one, going up the frame stack.
-  while (unw_step(&cursor) > 0 && backtrace_level < MAX_BACKTRACE_LEVEL) {
-      unw_word_t ip, sp;
-      unw_get_reg(&cursor, UNW_REG_IP, &ip);
-      unw_get_reg(&cursor, UNW_REG_SP, &sp);
-      crash_backtrace[backtrace_level] = (addr_value)ip;
-      backtrace_level ++;
-      // fprintf(stderr, "ip:%x sp:%x\n", (unsigned int)ip, (unsigned int)sp);
-      std::cerr << std::hex << "ip = " << (long) ip << ", sp = " << (long) sp << std::endl;
-  }
+    while (unw_step(&cursor) > 0 && backtrace_level < MAX_BACKTRACE_LEVEL) {
+        unw_word_t ip, sp;
+        unw_get_reg(&cursor, UNW_REG_IP, &ip);
+        unw_get_reg(&cursor, UNW_REG_SP, &sp);
+        crash_backtrace[backtrace_level] = (addr_value)ip;
+        backtrace_level ++;
+        // fprintf(stderr, "ip:%x sp:%x\n", (unsigned int)ip, (unsigned int)sp);
+        std::cerr << std::hex << "ip = " << (long) ip << ", sp = " << (long) sp << std::endl;
+    }
 
 
     std::vector<mapped_library_entry> mapped_library_text_sections;
@@ -123,9 +123,9 @@ void backtrace() {
 
 
 void myterminate () {
-  std::cerr << "terminate handler called\n";
-  backtrace();
-  abort();  // forces abnormal termination
+    std::cerr << "terminate handler called\n";
+    backtrace();
+    abort();  // forces abnormal termination
 }
 
 
@@ -139,7 +139,6 @@ int main()
 
     std::vector<boost::thread> threads;
     for(int i = 0; i <10; i++) {
-
         threads.emplace_back(boost::thread(thread_func, i));
     }
 
