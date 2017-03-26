@@ -11,6 +11,7 @@
 #include <setjmp.h>
 #include <string.h> //strlen
 #include <unistd.h> //fsync
+#include <typeinfo> //type_info
 
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
@@ -34,7 +35,10 @@ boost::mutex mutex_output;
 addr_value accessing_addr = 0;
 addr_value crash_backtrace[MAX_BACKTRACE_LEVEL];
 
-
+class Our_RuntimeError: public std::runtime_error{
+public:
+    Our_RuntimeError(std::string err_msg):std::runtime_error(err_msg) {}
+};
 
 static void wait(int seconds)
 {
@@ -49,7 +53,7 @@ static void thread_func(int thread_idx)
         {
             boost::lock_guard<boost::mutex> lock(mutex_output);
             if(thread_idx == 3 && i == 2) {
-                throw std::runtime_error("throw a exception!");
+                throw Our_RuntimeError("throw a runtime exception!");
                 // int* p=(int*)0xdeadbeef;
                 // *p = 2;
             }
@@ -124,6 +128,40 @@ void backtrace() {
 
 void myterminate () {
     std::cerr << "terminate handler called\n";
+
+    std::type_info *t = __cxxabiv1::__cxa_current_exception_type();
+    if (t)
+    {
+        // Note that "name" is the mangled name.
+        char const *name = t->name();
+        {
+            int status = -1;
+            char *dem = 0;
+
+            dem = __cxxabiv1::__cxa_demangle(name, 0, 0, &status);
+
+            std::cerr << "terminate called after throwing an instance of '";
+            if (status == 0) {
+                std::cerr << dem << "'" << std::endl;
+            }
+            else{
+                std::cerr << name << "'" << std::endl;
+            }
+
+            if (status == 0) {
+                free(dem);
+            }
+        }
+
+        try {
+            throw;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "<<<<< " << e.what() << std::endl;
+        }
+        catch (...) {}
+
+    }
     backtrace();
     abort();  // forces abnormal termination
 }
